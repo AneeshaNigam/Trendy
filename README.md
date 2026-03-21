@@ -14,13 +14,9 @@
 
 ---
 
-## 🚀 Live Demo & Screenshots
+##  Live Demo & Screenshots
 
 ### [🌐 Visit the Live Website here!](https://trendy-tawny.vercel.app/)
-
-<div align="center">
-  <img src="assets/demo.webp" alt="Platform Demonstration" width="100%" />
-</div>
 
 <br />
 
@@ -45,7 +41,7 @@
 
 ---
 
-## 🎯 Target Audience
+##  Target Audience
 
 - **Startup Founders & Indie Hackers:** Find your next profitable idea.
 - **Investors:** Spot early signals of emerging markets.
