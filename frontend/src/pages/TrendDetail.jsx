@@ -1,239 +1,220 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { TrendingUp, ArrowLeft, ExternalLink, Lightbulb, Loader2, FileText, Sheet, Code } from 'lucide-react';
+import { TrendingUp, ArrowLeft, Lightbulb, Loader2, Gem, Users, HelpCircle, Target, Sparkles, Info } from 'lucide-react';
 import axios from 'axios';
+import { generateOpportunityLayer } from '../utils/opportunityGenerator';
+import { normalizeScore } from '../utils/normalizeScore';
+import { useTranslation } from 'react-i18next';
 
-// Fallback mock data in case API is down or trend is not found
-const mockEmergingTrends = [
-  {
-    id: '4',
-    name: 'LLM Orchestration Frameworks',
-    explanation: 'Surge in frameworks designed to orchestrate complex multi-agent LLM workflows. Companies are moving beyond single-prompt apps to complex systems where multiple AI agents collaborate, requiring new infrastructure to manage state, memory, and execution flow.',
-    score: 8.8,
-    category: 'Technology',
-    Posts: [
-      { source: 'GitHub', url: 'https://github.com/trending' }, 
-      { source: 'Hacker News', url: 'https://news.ycombinator.com' }
-    ],
-    signals: [
-      { text: "LangChain releases new agent architecture", source: "GitHub", url: "https://github.com/langchain" },
-      { text: "Why orchestrating LLMs is the next big infrastructure play", source: "Hacker News", url: "https://news.ycombinator.com" },
-      { text: "Building robust multi-agent systems", source: "Reddit", url: "https://reddit.com/r/MachineLearning" }
-    ]
-  },
-  {
-    id: '5',
-    name: 'Edge AI inference',
-    explanation: 'Increasing momentum around running small LLMs locally on edge devices for privacy and speed. As open-source models become smaller and more capable, developers are pushing inference to laptops and phones rather than relying on expensive cloud APIs.',
-    score: 7.9,
-    category: 'Technology',
-    Posts: [{ source: 'Reddit', url: 'https://reddit.com/r/LocalLLaMA' }],
-    signals: [
-      { text: "Llama.cpp runs 7B model on iPhone", source: "GitHub", url: "https://github.com/ggerganov/llama.cpp" },
-      { text: "The future of AI is local", source: "Reddit", url: "https://reddit.com/r/LocalLLaMA" }
-    ]
-  }
+// Fallback mock data — no source platform names, non-dev-centric
+const MOCK_TRENDS = [
+  { id: 'f1', name: 'AI Healthcare Diagnostics', explanation: 'AI-powered diagnostic tools achieving near-physician accuracy in radiology and pathology, with FDA approvals accelerating clinical adoption globally.', score: 9.4, category: 'HealthTech', aiInsight: 'Healthcare AI is seeing regulatory approval and clinical adoption converge. Major hospital systems are deploying diagnostic AI at scale.', whyItMatters: 'A $20B+ market forming as AI diagnosis becomes standard clinical workflow. Early players defining protocols capture long-term value.', startupIdeas: ['AI second-opinion platform for radiologists', 'Clinical AI audit and compliance SaaS', 'Patient-facing diagnostic pre-screening app'], whoShouldCare: ['HealthTech founders', 'Medical device investors', 'Hospital innovation teams'] },
+  { id: 'f2', name: 'Agentic AI Workflows',      explanation: 'Autonomous AI agents that plan, execute, and iterate across long-horizon enterprise tasks are becoming production-ready in 2026.', score: 9.1, category: 'AI & ML', aiInsight: 'Multi-agent systems are moving from demo to production. Enterprise teams are deploying agents for research, QA, and content workflows.', whyItMatters: 'Agentic AI unlocks a fundamentally new class of software — autonomous, goal-directed systems that eliminate entire categories of human labor.', startupIdeas: ['No-code agent builder for business analysts', 'Agent monitoring and reliability platform', 'Domain-specific agents for legal/finance workflows'], whoShouldCare: ['AI product managers', 'Enterprise software buyers', 'Venture investors'] },
 ];
 
+function getStatusCls(score) {
+  if (score >= 8) return 'bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 border-red-200 dark:border-red-500/20';
+  if (score >= 6) return 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-500/20';
+  return 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/20';
+}
+function getStatusLabel(score) {
+  if (score >= 8) return 'Hot 🔥';
+  if (score >= 6) return 'Rising 📈';
+  return 'Emerging 🌱';
+}
+
 export default function TrendDetail() {
+  const { t } = useTranslation();
   const { id } = useParams();
-  const [trend, setTrend] = useState(null);
+  const [trend, setTrend]   = useState(null);
   const [loading, setLoading] = useState(true);
-  const [generatingIdeas, setGeneratingIdeas] = useState(false);
-  const [startupIdeas, setStartupIdeas] = useState([]);
-  const [error, setError] = useState('');
+  const [error, setError]   = useState('');
 
   useEffect(() => {
-    const fetchTrend = async () => {
+    (async () => {
       try {
-        setLoading(true);
-        // Try fetching from the actual backend
-        const res = await axios.get(`http://localhost:5000/api/trends/${id}`, {
-          withCredentials: true
-        });
+        const res = await axios.get(`http://localhost:5000/api/trends/${id}`, { withCredentials: true });
         setTrend(res.data.trend);
-      } catch (err) {
-        console.warn("Backend fetch failed, using mock data", err);
-        // Fallback to mock data if API fails or returns 404/401
-        const mockTrend = mockEmergingTrends.find(t => t.id === id);
-        if (mockTrend) {
-          setTrend(mockTrend);
+      } catch {
+        const mock = MOCK_TRENDS.find(t => t.id === id || t._id === id);
+        if (mock) {
+          setTrend(mock);
         } else {
-          setError('Trend not found');
+          try {
+            const list = await axios.get('http://localhost:5000/api/trends', { withCredentials: true });
+            const found = (list.data.trends || []).find(t => t._id === id);
+            found ? setTrend(found) : setError('Trend not found');
+          } catch {
+            setError('Trend not found');
+          }
         }
       } finally {
         setLoading(false);
       }
-    };
-    fetchTrend();
+    })();
   }, [id]);
 
-  const generateIdeas = async () => {
-    setGeneratingIdeas(true);
-    // Simulate API call for generating ideas based on this trend
-    setTimeout(() => {
-      setStartupIdeas([
-        `A developer tool that makes it seamless to implement ${trend?.name} into existing pipelines.`,
-        `A highly targeted B2B SaaS platform leveraging ${trend?.name} to solve a niche industry pain point.`,
-        `An open-source infrastructure project designed to commoditize the core technology behind ${trend?.name}.`
-      ]);
-      setGeneratingIdeas(false);
-    }, 1500);
-  };
-
   if (loading) {
-     return (
-       <div className="flex justify-center items-center h-64">
-         <Loader2 className="w-8 h-8 animate-spin text-gray-400 dark:text-gray-500" />
-       </div>
-     );
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-gray-400 dark:text-gray-500" />
+      </div>
+    );
   }
 
   if (error || !trend) {
-     return (
-       <div className="max-w-4xl mx-auto text-center py-20">
-         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Trend Not Found</h2>
-         <p className="text-gray-500 dark:text-gray-400 mb-8">We couldn't find the details for this trend.</p>
-         <Link to="/trends" className="text-blue-600 dark:text-blue-400 hover:underline">Back to Trends</Link>
-       </div>
-     );
+    return (
+      <div className="max-w-4xl mx-auto text-center py-20">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Trend Not Found</h2>
+        <p className="text-gray-500 dark:text-gray-400 mb-8">We couldn't find this trend.</p>
+        <Link to="/trends" className="text-amber-600 dark:text-amber-400 hover:underline font-medium">← Back to Trends</Link>
+      </div>
+    );
   }
 
-  // Handle both mock structures and mongoose populated structures
-  const signalsList = trend.signals || trend.Posts || [];
+  const score   = normalizeScore(trend.score);
+  const oppLayer = generateOpportunityLayer(trend);
+
+  // Use embedded fields first, then fallback to generated oppLayer
+  const aiInsight    = trend.aiInsight    || null;
+  const whyItMatters = trend.whyItMatters || trend.whyMatters || oppLayer.whyMatters;
+  const startupIdeas = trend.startupIdeas?.length ? trend.startupIdeas : null;
+  const whoShouldCare = trend.whoShouldCare?.length ? trend.whoShouldCare : null;
 
   return (
-    <div className="max-w-4xl mx-auto pb-12 transition-colors">
-      {/* Header */}
-      <div className="mb-6">
-        <Link to="/trends" className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-6 transition-colors">
-          <ArrowLeft className="w-4 h-4" /> Back to Trends
-        </Link>
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight">{trend.name}</h1>
-            {trend.category && (
-               <span className="inline-block px-3 py-1 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 rounded-full text-xs font-semibold mt-3">
-                  {trend.category}
-               </span>
-            )}
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-             <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-500 border border-amber-200 dark:border-amber-500/30 rounded-full font-bold shadow-sm">
-               <TrendingUp className="w-5 h-5" />
-               <span className="text-lg">{Number(trend.score).toFixed(1)}</span>
-             </div>
-             <div className="flex items-center gap-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm p-1 ml-auto md:ml-2">
-                <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded transition-colors" title="Export to PDF">
-                   <FileText className="w-3.5 h-3.5 text-red-500" /> PDF
-                </button>
-                <div className="w-px h-4 bg-gray-200 dark:bg-slate-700"></div>
-                <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded transition-colors" title="Export to Excel">
-                   <Sheet className="w-3.5 h-3.5 text-green-600 dark:text-green-500" /> Excel
-                </button>
-                <div className="w-px h-4 bg-gray-200 dark:bg-slate-700"></div>
-                <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded transition-colors" title="Export via API (JSON)">
-                   <Code className="w-3.5 h-3.5 text-blue-500" /> JSON
-                </button>
-             </div>
-          </div>
+    <div className="max-w-3xl mx-auto pb-12 transition-colors">
+
+      {/* Back link */}
+      <Link to="/trends" className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-6 transition-colors">
+        <ArrowLeft className="w-4 h-4" /> {t('trends.title')}
+      </Link>
+
+      {/* Title — no export buttons */}
+      <div className="mb-8">
+        <div className="flex flex-wrap items-center gap-2 mb-3">
+          {trend.category && (
+            <span className="px-3 py-1 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 rounded-full text-xs font-bold">
+              {trend.category}
+            </span>
+          )}
+          <span className={`px-3 py-1 rounded-full border text-xs font-bold ${getStatusCls(score)}`}>
+            {getStatusLabel(score)}
+          </span>
+        </div>
+        <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-2">{trend.name}</h1>
+        <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-500 border border-amber-200 dark:border-amber-500/30 rounded-2xl font-bold w-fit shadow-sm">
+          <TrendingUp className="w-5 h-5" />
+          <span className="text-lg">{score}</span>
+          <span className="text-sm font-normal text-amber-500/70">/ 10</span>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="bg-white dark:bg-slate-900/50 border border-gray-200 dark:border-slate-800 rounded-xl p-8 mb-8 shadow-sm transition-colors">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">AI Explanation</h2>
-        <p className="text-gray-700 dark:text-gray-300 text-lg leading-relaxed">
-          {trend.explanation || 'No detailed explanation available for this trend.'}
-        </p>
-      </div>
+      <div className="space-y-5">
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-         {/* Signals / Sources */}
-         <div>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 inline-flex items-center gap-2">
-               Signal Sources
-            </h2>
-            <div className="bg-white dark:bg-slate-900/50 border border-gray-200 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden transition-colors">
-               {signalsList.length > 0 ? (
-                  <ul className="divide-y divide-gray-100 dark:divide-slate-800">
-                     {signalsList.map((signal, idx) => (
-                        <li key={idx} className="p-4 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors">
-                           <a 
-                              href={signal.url || '#'} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="flex items-start justify-between group"
-                           >
-                              <div>
-                                 <span className="inline-block px-2 py-1 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 text-xs font-semibold rounded mb-2 border border-gray-200 dark:border-slate-700">
-                                    {signal.source || 'Internet'}
-                                 </span>
-                                 <p className="text-sm text-gray-800 dark:text-gray-200 font-medium group-hover:text-amber-600 dark:group-hover:text-amber-500 transition-colors">
-                                    {signal.text || signal.title || `Discussion thread on ${signal.source}`}
-                                 </p>
-                              </div>
-                              <ExternalLink className="w-4 h-4 text-gray-400 dark:text-gray-500 group-hover:text-amber-600 dark:group-hover:text-amber-500 opacity-0 group-hover:opacity-100 transition-opacity" />
-                           </a>
-                        </li>
-                     ))}
-                  </ul>
-               ) : (
-                  <div className="p-6 text-center text-gray-500 dark:text-gray-400 text-sm">No specific signals recorded.</div>
-               )}
-            </div>
-         </div>
+        {/* Explanation */}
+        {trend.explanation && (
+          <div className="bg-white dark:bg-slate-900/50 border border-gray-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+            <p className="text-gray-700 dark:text-gray-300 text-base leading-relaxed">{trend.explanation}</p>
+          </div>
+        )}
 
-         {/* Startup Idea Generator */}
-         <div>
-            <div className="bg-gray-50 dark:bg-slate-900/40 border border-gray-200 dark:border-slate-800 rounded-xl p-6 h-full flex flex-col transition-colors">
-               <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2 inline-flex items-center gap-2">
-                  <Lightbulb className="w-5 h-5 text-amber-500" /> Startup Ideas
-               </h2>
-               <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                  Use our AI to brainstorm potential startup ideas capitalizing on this emerging trend.
-               </p>
-               
-               {startupIdeas.length > 0 ? (
-                  <div className="flex-1">
-                     <ul className="space-y-4 mb-6">
-                        {startupIdeas.map((idea, idx) => (
-                           <li key={idx} className="text-sm text-gray-800 dark:text-gray-200 bg-white dark:bg-slate-800 p-4 rounded-lg border border-gray-100 dark:border-slate-700 shadow-sm relative pl-10">
-                              <span className="absolute left-4 top-4 font-bold text-amber-500">{idx + 1}.</span>
-                              {idea}
-                           </li>
-                        ))}
-                     </ul>
-                     <button 
-                        onClick={generateIdeas}
-                        disabled={generatingIdeas}
-                        className="w-full py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-gray-300 font-semibold rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors flex items-center justify-center gap-2 shadow-sm"
-                     >
-                        {generatingIdeas ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lightbulb className="w-4 h-4" />}
-                        Generate More Ideas
-                     </button>
-                  </div>
-               ) : (
-                  <div className="flex-1 flex flex-col items-center justify-center text-center">
-                     <button 
-                        onClick={generateIdeas}
-                        disabled={generatingIdeas}
-                        className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black font-semibold rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 transition-all shadow-md active:scale-95 flex items-center gap-2"
-                     >
-                        {generatingIdeas ? (
-                           <>
-                              <Loader2 className="w-5 h-5 animate-spin" /> Generating...
-                           </>
-                        ) : (
-                           <>
-                              <Lightbulb className="w-5 h-5" /> Generate Ideas
-                           </>
-                        )}
-                     </button>
-                  </div>
-               )}
+        {/* AI Insight */}
+        {aiInsight && (
+          <section className="bg-gradient-to-br from-amber-50 to-orange-50/60 dark:from-amber-500/8 dark:to-orange-500/5 border border-amber-200/80 dark:border-amber-500/20 rounded-2xl p-6 shadow-sm">
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles className="w-4 h-4 text-amber-500" />
+              <h2 className="text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">{t('trends.ai_insight')}</h2>
             </div>
-         </div>
+            <p className="text-amber-900 dark:text-amber-200/90 leading-relaxed">{aiInsight}</p>
+          </section>
+        )}
+
+        {/* Why It Matters */}
+        {whyItMatters && (
+          <section className="bg-blue-50 dark:bg-blue-500/8 border border-blue-200/80 dark:border-blue-500/20 rounded-2xl p-6 shadow-sm">
+            <div className="flex items-center gap-2 mb-3">
+              <Info className="w-4 h-4 text-blue-500" />
+              <h2 className="text-xs font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider">{t('trends.why_matters')}</h2>
+            </div>
+            <p className="text-blue-900 dark:text-blue-200/90 leading-relaxed">{whyItMatters}</p>
+          </section>
+        )}
+
+        {/* Opportunity Layer */}
+        <div className="bg-gradient-to-br from-gray-50 to-gray-100/50 dark:from-slate-800/40 dark:to-slate-800/20 border border-gray-200 dark:border-slate-700 rounded-2xl p-6 shadow-sm">
+          <h2 className="text-base font-bold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
+            <Gem className="w-5 h-5 text-amber-500" /> {t('opportunities.opportunity')} Layer
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="space-y-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <HelpCircle className="w-4 h-4 text-amber-500" />
+                  <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">The Problem</span>
+                </div>
+                <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed pl-6 italic">{oppLayer.problem}</p>
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <Target className="w-4 h-4 text-blue-500" />
+                  <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Why Now</span>
+                </div>
+                <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed pl-6">{oppLayer.whyMatters}</p>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <Users className="w-4 h-4 text-purple-500" />
+                  <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('trends.who_cares')}</span>
+                </div>
+                <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed pl-6">{oppLayer.whoShouldCare}</p>
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <Gem className="w-4 h-4 text-amber-500" />
+                  <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('opportunities.opportunity')}</span>
+                </div>
+                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 leading-relaxed pl-6">{oppLayer.opportunity}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Startup Ideas */}
+        {startupIdeas && (
+          <section>
+            <div className="flex items-center gap-2 mb-3">
+              <Lightbulb className="w-4 h-4 text-amber-500" />
+              <h2 className="text-base font-bold text-gray-900 dark:text-white">{t('trends.startup_ideas')}</h2>
+            </div>
+            <div className="space-y-3">
+              {startupIdeas.map((idea, i) => (
+                <div key={i} className="flex items-start gap-3 bg-white dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800 rounded-xl p-4 hover:border-amber-200 dark:hover:border-amber-500/30 shadow-sm transition-colors">
+                  <span className="text-xl font-extrabold text-gray-200 dark:text-slate-700 shrink-0 w-5">{i + 1}</span>
+                  <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{idea}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Who Should Care */}
+        {whoShouldCare && (
+          <section>
+            <div className="flex items-center gap-2 mb-3">
+              <Users className="w-4 h-4 text-purple-500" />
+              <h2 className="text-base font-bold text-gray-900 dark:text-white">{t('trends.who_cares')}</h2>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {(Array.isArray(whoShouldCare) ? whoShouldCare : [whoShouldCare]).map((role, i) => (
+                <span key={i} className="px-3 py-1.5 bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/20 text-purple-700 dark:text-purple-400 rounded-full text-xs font-semibold">
+                  {role}
+                </span>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </div>
   );

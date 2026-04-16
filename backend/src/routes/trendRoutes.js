@@ -1,31 +1,26 @@
 import express from 'express';
 import Trend from '../models/Trend.js';
-import { ensurePremium } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// @desc    Get top trends
+// @desc    Get top trends (public — no auth required)
 // @route   GET /api/trends
 router.get('/', async (req, res) => {
     try {
-        const isPremium = req.isAuthenticated && req.isAuthenticated() && req.user && req.user.plan === 'premium';
-        const limit = isPremium ? 100 : 5; // Free tier gets top 5
-        
         const trends = await Trend.find()
             .sort({ score: -1 })
-            .limit(limit)
-            // .populate('signals'); // Can populate if needed
+            .limit(100);
         
-        res.json({ trends, isPremiumLimit: !isPremium });
+        res.json({ trends });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Server error fetching trends' });
     }
 });
 
-// @desc    Get detailed trend info (Premium only)
+// @desc    Get detailed trend info (public)
 // @route   GET /api/trends/:id
-router.get('/:id', ensurePremium, async (req, res) => {
+router.get('/:id', async (req, res) => {
     try {
         const trend = await Trend.findById(req.params.id).populate('signals');
         if (!trend) {

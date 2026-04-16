@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronDown, BarChart3, Target, Globe, Lightbulb } from 'lucide-react';
+import { ChevronDown, BarChart3, Target, Globe, Lightbulb, Radar, TrendingUp, Gem } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 export default function Home() {
@@ -21,12 +21,33 @@ export default function Home() {
     { q: t('home_faq.q4'), a: t('home_faq.a4') }
   ];
 
+  const howItWorksSteps = [
+    {
+      number: '01',
+      icon: Radar,
+      title: 'We scan online signals',
+      desc: 'Our AI monitors Reddit, GitHub, Hacker News, and dozens of communities 24/7 to capture early-stage conversations and activity.'
+    },
+    {
+      number: '02',
+      icon: TrendingUp,
+      title: 'Detect emerging trends',
+      desc: 'Machine learning clusters related signals, scores momentum, and identifies patterns before they become mainstream.'
+    },
+    {
+      number: '03',
+      icon: Gem,
+      title: 'Convert them into opportunities',
+      desc: 'Each trend is transformed into a problem statement with an opportunity layer — so you can act on insights, not just observe them.'
+    }
+  ];
+
   return (
     <div className="flex flex-col min-h-[calc(100vh-4rem)] pt-12 pb-24 transition-colors duration-300">
       
       {/* Hero Section */}
       <section className="px-8 mx-auto max-w-7xl relative overflow-visible w-full mb-32">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-50/50 dark:bg-blue-900/10 rounded-full blur-[120px] pointer-events-none transition-colors"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-amber-50/50 dark:bg-amber-900/10 rounded-full blur-[120px] pointer-events-none transition-colors"></div>
         <div className="flex flex-col md:flex-row items-center justify-between relative z-10 w-full">
           <div className="w-full md:w-1/2 flex flex-col justify-center pr-0 md:pr-12 text-gray-900 dark:text-white transition-colors duration-300 relative z-20">
             <h1 className="text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight mb-6 mt-12 md:mt-0">
@@ -39,7 +60,7 @@ export default function Home() {
             <div className="flex flex-wrap items-center gap-4">
               <Link 
                 to="/trends" 
-                className="px-8 py-3.5 bg-amber-600 text-white font-bold rounded-xl hover:bg-amber-700 transition-all shadow-lg shadow-amber-600/20 active:scale-[0.98]"
+                className="px-8 py-3.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-amber-500/20 active:scale-[0.98]"
               >
                 {t('home.explore_trends')}
               </Link>
@@ -83,6 +104,35 @@ export default function Home() {
         </div>
       </section>
 
+      {/* How It Works Section */}
+      <section className="w-full bg-gradient-to-br from-gray-50 to-white dark:from-slate-900/50 dark:to-[#0f1115] border-y border-gray-100 dark:border-slate-800/80 py-24 transition-colors">
+        <div className="max-w-6xl mx-auto px-8 relative z-10">
+          <div className="text-center mb-16">
+            <span className="inline-block px-4 py-1.5 bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-500 border border-amber-200 dark:border-amber-500/20 rounded-full text-xs font-bold uppercase tracking-wider mb-4">How It Works</span>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white mb-4">From Signals to Opportunities in 3 Steps</h2>
+            <p className="text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">Our AI-powered pipeline transforms raw online signals into actionable business intelligence.</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+            {/* Connecting line (desktop) */}
+            <div className="hidden md:block absolute top-1/2 left-[16.67%] right-[16.67%] h-0.5 bg-gradient-to-r from-amber-200 via-amber-400 to-orange-400 dark:from-amber-500/20 dark:via-amber-500/40 dark:to-orange-500/20 -translate-y-8"></div>
+            
+            {howItWorksSteps.map((step, i) => (
+              <div key={i} className="relative group">
+                <div className="bg-white dark:bg-slate-900/50 p-8 rounded-2xl border border-gray-200 dark:border-slate-700/50 hover:border-amber-300 dark:hover:border-amber-500/30 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 text-center relative z-10">
+                  <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-amber-500/20 group-hover:shadow-amber-500/40 group-hover:scale-110 transition-all duration-300">
+                    <step.icon className="w-7 h-7 text-white" />
+                  </div>
+                  <span className="text-5xl font-extrabold text-gray-100 dark:text-slate-800 absolute top-4 right-6">{step.number}</span>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3 relative z-10">{step.title}</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed relative z-10">{step.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Use Cases Section */}
       <section className="w-full bg-white dark:bg-slate-900/30 border-y border-gray-100 dark:border-slate-800/80 py-24 transition-colors">
         <div className="max-w-6xl mx-auto px-8 relative z-10">
@@ -93,8 +143,8 @@ export default function Home() {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
              {useCases.map((uc, i) => (
-                <div key={i} className="bg-gray-50/50 dark:bg-slate-800/40 p-8 rounded-2xl border border-gray-100 dark:border-slate-700/50 hover:border-gray-300 dark:hover:border-slate-600 transition-colors group">
-                   <div className="w-12 h-12 bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 flex items-center justify-center mb-6 shadow-sm group-hover:scale-110 group-hover:shadow-md transition-all">
+                <div key={i} className="bg-gray-50/50 dark:bg-slate-800/40 p-8 rounded-2xl border border-gray-100 dark:border-slate-700/50 hover:border-amber-200 dark:hover:border-amber-500/30 transition-all duration-300 group hover:shadow-lg hover:-translate-y-1">
+                   <div className="w-12 h-12 bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 flex items-center justify-center mb-6 shadow-sm group-hover:scale-110 group-hover:shadow-md group-hover:bg-amber-50 dark:group-hover:bg-amber-500/10 transition-all duration-300">
                       <uc.icon className="w-6 h-6 text-amber-500" />
                    </div>
                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">{uc.title}</h3>
