@@ -23,12 +23,14 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Express Session
 app.use(session({
   secret: process.env.SESSION_SECRET || 'supersecretkeyboardcat',
   resave: false,
   saveUninitialized: false
 }));
 
+// Passport middleware
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -42,17 +44,22 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-// Start: wait for DB before launching server & jobs
+// 🚀 Proper server start with DB connection
 const startServer = async () => {
   try {
-    await connectDB();                       // ✅ DB ready first
+    console.log("Connecting to MongoDB...");
+
+    await connectDB(); // ✅ WAIT for DB connection
 
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
-      startJobs();                           // ✅ jobs start after DB is confirmed
+
+      console.log("Initializing background jobs...");
+      startJobs(); // ✅ runs AFTER DB is ready
     });
-  } catch (err) {
-    console.error('Fatal: could not start server —', err.message);
+
+  } catch (error) {
+    console.error("Failed to start server:", error.message);
     process.exit(1);
   }
 };
