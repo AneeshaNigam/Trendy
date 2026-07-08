@@ -3,7 +3,13 @@ import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 
 dotenv.config();
-
+console.log({
+    user: process.env.MONGO_USER,
+    cluster: process.env.MONGO_CLUSTER,
+    db: process.env.MONGO_DB,
+    hasPassword: !!process.env.MONGO_PASSWORD,
+    hasMongoUri: !!process.env.MONGO_URI
+});
 const buildMongoUri = () => {
     if (process.env.MONGO_URI) {
         return process.env.MONGO_URI;
