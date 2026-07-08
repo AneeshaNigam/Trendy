@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import axios from 'axios';
+import { API_BASE } from '../config/api.js';
 
 const AuthContext = createContext(null);
 
@@ -12,7 +13,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/auth/me', {
+        const res = await axios.get(`${API_BASE}/api/auth/me`, {
           withCredentials: true,
         });
         if (res.data.isAuthenticated && res.data.user) {
@@ -34,12 +35,12 @@ export function AuthProvider({ children }) {
   }, []);
 
   const loginWithGoogle = () => {
-    window.location.href = 'http://localhost:5000/api/auth/google';
+    window.location.href = `${API_BASE}/api/auth/google`;
   };
 
   const logout = async () => {
     try {
-      await axios.get('http://localhost:5000/api/auth/logout', { withCredentials: true });
+      await axios.get(`${API_BASE}/api/auth/logout`, { withCredentials: true });
     } catch {
       // ignore
     }

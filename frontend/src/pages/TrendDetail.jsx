@@ -5,6 +5,7 @@ import axios from 'axios';
 import { generateOpportunityLayer } from '../utils/opportunityGenerator';
 import { normalizeScore } from '../utils/normalizeScore';
 import { useTranslation } from 'react-i18next';
+import { API_BASE } from '../config/api.js';
 
 // Fallback mock data — no source platform names, non-dev-centric
 const MOCK_TRENDS = [
@@ -33,7 +34,7 @@ export default function TrendDetail() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/trends/${id}`, { withCredentials: true });
+        const res = await axios.get(`${API_BASE}/api/trends/${id}`, { withCredentials: true });
         setTrend(res.data.trend);
       } catch {
         const mock = MOCK_TRENDS.find(t => t.id === id || t._id === id);
@@ -41,7 +42,7 @@ export default function TrendDetail() {
           setTrend(mock);
         } else {
           try {
-            const list = await axios.get('http://localhost:5000/api/trends', { withCredentials: true });
+            const list = await axios.get(`${API_BASE}/api/trends`, { withCredentials: true });
             const found = (list.data.trends || []).find(t => t._id === id);
             found ? setTrend(found) : setError('Trend not found');
           } catch {

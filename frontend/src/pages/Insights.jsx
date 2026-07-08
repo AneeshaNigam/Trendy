@@ -6,6 +6,7 @@ import {
 import axios from 'axios';
 import { normalizeScore } from '../utils/normalizeScore';
 import { useTranslation } from 'react-i18next';
+import { API_BASE } from '../config/api.js';
 
 // ─── Fully enriched fallback data — 15 "mini insight reports" ────────────────
 const fallbackTrends = [
@@ -366,7 +367,7 @@ export default function Insights() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/trends', { withCredentials: true });
+        const res = await axios.get(`${API_BASE}/api/trends`, { withCredentials: true });
         const api = res.data.trends || [];
         // Merge API trends with our enriched fallback (fallback provides insight content)
         const merged = api.length > 0

@@ -8,8 +8,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
-
-const API_BASE = 'http://localhost:5000';
+import { API_BASE } from '../config/api.js';
 
 export function useSearch(query, debounceMs = 500) {
   const [trends, setTrends] = useState([]);

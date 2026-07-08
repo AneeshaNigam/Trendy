@@ -7,6 +7,7 @@ import axios from 'axios';
 import { generateOpportunityLayer } from '../utils/opportunityGenerator';
 import { normalizeScore } from '../utils/normalizeScore';
 import { useTranslation } from 'react-i18next';
+import { API_BASE } from '../config/api.js';
 
 // ─── Rich fallback opportunities ─────────────────────────────────────────────
 const FALLBACK_TRENDS = [
@@ -228,7 +229,7 @@ export default function Opportunities() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/trends', { withCredentials: true });
+        const res = await axios.get(`${API_BASE}/api/trends`, { withCredentials: true });
         const api = (res.data.trends || []);
         setTrends(api.length > 0 ? api : FALLBACK_TRENDS);
       } catch (err) {

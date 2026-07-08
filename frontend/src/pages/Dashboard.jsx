@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { normalizeScore } from '../utils/normalizeScore';
 import { useTranslation } from 'react-i18next';
+import { API_BASE } from '../config/api.js';
 
 // ─── Enriched fallback trends — full paragraph insights, specific ideas ──────
 const FALLBACK_TRENDS = [
@@ -417,7 +418,7 @@ export default function Dashboard() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/trends', { withCredentials: true });
+        const res = await axios.get(`${API_BASE}/api/trends`, { withCredentials: true });
         const apiTrends = (res.data.trends || []).map(t => ({ ...t, score: normalizeScore(t.score) })).filter(t => t.name !== 'General Tech News');
         setTrends(apiTrends.length > 0 ? apiTrends : FALLBACK_TRENDS);
       } catch (err) {

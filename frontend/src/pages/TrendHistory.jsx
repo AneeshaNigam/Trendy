@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Loader2, AlertTriangle } from 'lucide-react';
 import axios from 'axios';
+import { API_BASE } from '../config/api.js';
 
 
 
@@ -24,7 +25,7 @@ export default function TrendHistory() {
     const fetchHistory = async () => {
       try {
         // Try to derive history from the trends API
-        const res = await axios.get('http://localhost:5000/api/trends', { withCredentials: true });
+        const res = await axios.get(`${API_BASE}/api/trends`, { withCredentials: true });
         const apiTrends = res.data.trends || [];
         
         if (apiTrends.length > 0) {
